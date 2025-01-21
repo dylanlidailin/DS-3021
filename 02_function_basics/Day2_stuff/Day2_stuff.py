@@ -5,8 +5,7 @@
 import pandas as pd
 data = pd.read_csv("ClassData.csv")
 print(data.head())
-
-import pandas as pd
+print(data.shape)
 
 # Sample dataset using Data Wrangler
 data = {
@@ -17,6 +16,3 @@ data = {
 
 df = pd.DataFrame(data)
 print(df)
-
-import plotly
-print(plotly.__version__)
