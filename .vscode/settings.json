@@ -32,8 +32,14 @@
     "accessibility.signals.diffLineModified": {
         "sound": "off"
     },
+<<<<<<< HEAD
     "workbench.editorAssociations": {
         "*.copilotmd": "vscode.markdown.preview.editor",
         "file:/**/*.csv": "jupyter-data-wrangler"
     }
+=======
+    "cSpell.words": [
+        "multicolinearity"
+    ]
+>>>>>>> upstream/main
 }
