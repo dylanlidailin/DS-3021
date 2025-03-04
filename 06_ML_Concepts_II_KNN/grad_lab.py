@@ -17,7 +17,7 @@ Meaning use the train set to select the correct k value. Make sure it is a class
 if needed changed the target variable.
 
 3. Create a dataframe that includes the test target values, test predicted values, 
-and tes probabilities of the positive class.
+and test probabilities of the positive class.
 
 4. Use the above dataframe to experiment with the threshold function. What happens at higher 
 and lower thresholds when looking at the confusion matrix? Document what you see in comments.
@@ -30,7 +30,7 @@ levels or not? Why or why not?
 Then talk through your question, summarize what 
 concerns or positive elements do you have about the model? 
 
-7. Clean up your code such that you have 2 functions. One the cleans the data & splits into training|test and one that 
+7. Clean up your code such that you have 2 functions. One that cleans the data & splits into training|test and one that 
 allows you to train and test the model with different k and threshold values. Make sure not to use variable names in the 
 functions, you want the functions to be usable in different scenarios (see question 9). 
 
@@ -43,14 +43,18 @@ step 7.
 
 # example of how I cleaned the data
 # README for the dataset - https://data.world/databeats/college-completion/workspace/file?filename=README.txt
+#%%
+#---import the data----
 import pandas as pd
 
 grad_data = pd.read_csv('https://query.data.world/s/qpi2ltkz23yp2fcaz4jmlrskjx5qnp', encoding="cp1252")
 # the encoding part here is important to properly read the data! It doesn't apply to ALL csv files read from the web,
 # but it was necessary here.
 grad_data.info()
+grad_data
 
 #%%
+#---dropping the NA----
 # We have a lot of data! A lot of these have many missing values or are otherwise not useful.
 to_drop = list(range(39, 56))
 to_drop.extend([27, 9, 10, 11, 28, 36, 60, 56])
@@ -100,3 +104,55 @@ sns.displot(
     multiple="fill",
     aspect=1.25
 )
+
+## Can we predict if a student will graduate within the normal time?"
+
+#%%
+grad_data2
+#%%
+# 1. Set the target variable
+median_grad = grad_data2["grad_100_value"].median()
+#grad_data2["grad_100_class"] = (grad_data2["grad_100_value"] >= median_grad).astype('category')
+#grad_data2.drop(columns=['grad_100_value'], inplace=True)
+grad_data2['grad_100_class_1'] = (grad_data2['grad_100_value'] >= median_grad).astype(int)
+grad_data2['grad_100_class_0'] = (grad_data2['grad_100_value'] < median_grad).astype(int)
+# %%
+# 2. Build and optimize a kNN model to predict your target variable.
+from sklearn import preprocessing
+scaler = preprocessing.MinMaxScaler()
+numeric_cols = grad_data2.select_dtypes(include='int64').columns
+d = scaler.fit_transform(grad_data2[numeric_cols])   # conduct data transformation
+scaled_df = pd.DataFrame(d, columns=numeric_cols)   # convert back to pd df; transformation converts to array
+grad_data2[numeric_cols] = scaled_df
+# %%
+# One-hot encoding
+cat_cols = grad_data2.select_dtypes(include='category').columns
+encoded = pd.get_dummies(grad_data2[cat_cols], drop_first=True)
+# %%
+grad_data2 = grad_data2.drop(cat_cols, axis=1)
+grad_data2 = grad_data2.join(encoded)
+# %%
+print(grad_data2['grad_100_class_True'].value_counts()[1] / grad_data2['grad_100_class_True'].count())
+#This means that at random, we have an 50% chance of correctly predicting whether a person graduates within the normal time.
+
+#%%
+from sklearn.model_selection import train_test_split
+train, test = train_test_split(grad_data2,  test_size=0.4, stratify = grad_data2['grad_100_class_True'],random_state=11) 
+test, val = train_test_split(test, test_size=0.5, stratify=test['grad_100_class_True'],random_state=11)
+
+#%%
+import random
+from sklearn.neighbors import KNeighborsClassifier
+random.seed(11)  
+
+X_train = train.drop(['grad_100_class_True'], axis=1).values
+y_train = train['grad_100_class_True'].values
+
+neigh = KNeighborsClassifier(n_neighbors=3)
+neigh.fit(X_train, y_train)
+# %%
+X_test = test.drop(['grad_100_class_True'], axis=1).values
+y_test = test['grad_100_class_True'].values
+
+print(neigh.score(X_test, y_test))
+# %%

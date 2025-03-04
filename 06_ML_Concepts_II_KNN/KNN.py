@@ -66,10 +66,9 @@ sns.displot(
 # NO MISSING DATA!
 
 #%%
-# now, we normalize the numeric variables
+# Now, we normalize the numeric variables
 numeric_cols = bank_data.select_dtypes(include='int64').columns
 print(numeric_cols)
-
 
 #%%
 from sklearn import preprocessing
@@ -82,7 +81,7 @@ bank_data[numeric_cols] = scaled_df   # put data back into the main df
 bank_data.describe()   # as we can see, the data is now normalized!
 
 #%%
-# Now, we onehot encode the data -- for reference, this is the process of converting categorical variables to a usable form for 
+# Now, we one-hot encode the data -- for reference, this is the process of converting categorical variables to a usable form for 
 # a machine learning algorithm.
 
 cat_cols = bank_data.select_dtypes(include='category').columns
@@ -122,24 +121,24 @@ def clean_and_split_data(df, target, test_size=0.4, val_size=0.5, random_state=1
     employed = ['admin', 'blue-collar', 'entrepreneur', 'housemaid', 'management',
                 'self-employed', 'services', 'technician']
     df.iloc[:, df.columns.get_loc('job')] = df.iloc[:, df.columns.get_loc('job')].apply(lambda x: "Employed" if x in employed else "Unemployed")
-    
+   
     # Convert appropriate columns to category
     cat_cols = ['job', 'marital', 'education', 'default', 'housing', 'contact', 'poutcome', target]
     df[cat_cols] = df[cat_cols].astype('category')
-    
+   
     # Normalize numeric columns
     numeric_cols = df.select_dtypes(include='int64').columns
     scaler = preprocessing.MinMaxScaler()
     df[numeric_cols] = scaler.fit_transform(df[numeric_cols])
-    
+   
     # One-hot encode categorical columns
     encoded = pd.get_dummies(df[cat_cols])
     df = df.drop(cat_cols, axis=1).join(encoded)
-    
+   
     # Split data into train, test, and validation sets
     train, test = train_test_split(df, test_size=test_size, stratify=df[f'{target}_1'], random_state=random_state)
     test, val = train_test_split(test, test_size=val_size, stratify=test[f'{target}_1'], random_state=random_state)
-    
+   
     return train, test, val
 # Usage
 train, test, val = clean_and_split_data(bank_data, 'signed up')
@@ -149,7 +148,8 @@ train, test, val = clean_and_split_data(bank_data, 'signed up')
 import random
 random.seed(1984)   # kNN is a random algorithm, so we use `random.seed(x)` to make results repeatable
 
-X_train = train.drop(['signed up_1'], axis=1)
+# split x/y
+X_train = train.drop(['signed up_1','signed up_0'], axis=1)
 y_train = train['signed up_1'].values
 
 neigh = KNeighborsClassifier(n_neighbors=9)
@@ -180,9 +180,9 @@ y_test = test['signed up_1'].values
 print(neigh.score(X_test, y_test))
 #%%
 # -------- Evaluate model --------
-# A 99.0% accuracy rate is pretty good but keep in mind the baserate is roughly 89/11, so we have more or less a 90% chance of 
+# A 99.0% accuracy rate is pretty good but keep in mind the base rate is roughly 89/11, so we have more or less a 90% chance of 
 # guessing right if we don't know anything about the customer, but the negative outcomes we don't really care about, this model's 
-# value is being able to id sign ups when they are actually sign ups. This requires us to know are true positive rate, or 
+# value is being able to id sign ups when they are actually sign ups. This requires us to know what are true positive rate, or 
 # Sensitivity or Recall. So let's dig a little deeper.   
 
 # create a confusion matrix
@@ -233,11 +233,11 @@ print(test)
 
 #%%
 # Check for features that perfectly predict the 'signed up' variable
-#for column in bank_data.columns:
-#    if column != 'signed up_1':
-#        crosstab = pd.crosstab(bank_data[column], bank_data['signed up_1'])
-#        if crosstab.max().max() == crosstab.sum().max():
-#            print(f"Feature '{column}' perfectly predicts the 'signed up' variable.")
+for column in bank_data.columns:
+    if column != 'signed up_1':
+        crosstab = pd.crosstab(bank_data[column], bank_data['signed up_1'])
+        if crosstab.max().max() == crosstab.sum().max():
+            print(f"Feature '{column}' perfectly predicts the 'signed up' variable.")
 
 #%%
 test = test.sort_values(by=['accu'], ascending=False)
@@ -316,8 +316,10 @@ def adjust_thres(x, y, z):
 confusion_matrix(final_model.actual_class, final_model.pred_class)   # original model
 
 #%%
+#if the particular threshold is above 90%, count it as a 1. Otherwise, count it as a 0.
 adjust_thres(final_model.pred_prob, .90, final_model.actual_class)   # raise threshold 
 #%%
+#lowering the threshold
 adjust_thres(final_model.pred_prob, .5, final_model.actual_class)   # lower threshold
 
 #%%
