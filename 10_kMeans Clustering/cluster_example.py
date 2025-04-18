@@ -17,8 +17,8 @@ os.listdir()
 os.chdir('c:\\Users\\Brian Wright\\Documents\\3001Python\\DS-3001')
 #%%
 # Load Data
-house_votes_Dem = pd.read_csv("data/house_votes_Dem.csv", encoding='latin')
-house_votes_Rep = pd.read_csv("data/house_votes_Rep.csv")
+house_votes_Dem = pd.read_csv("../data/house_votes_Dem.csv", encoding='latin')
+house_votes_Rep = pd.read_csv("../data/house_votes_Rep.csv")
 #%%
 #Let's take a look at the data
 print(house_votes_Dem.head())
@@ -35,9 +35,9 @@ kmeans_obj_Dem = KMeans(n_clusters=2, random_state=1).fit(clust_data_Dem)
 
 #%%
 #Take a look at the clustering results
-print(kmeans_obj_Dem.cluster_centers_)
-print(kmeans_obj_Dem.labels_)
-print(kmeans_obj_Dem.inertia_)
+print(kmeans_obj_Dem.cluster_centers_) #the result is a 2*3 matrix, each row representing a coordinate, which means 2 clusters with 3 features
+#print(kmeans_obj_Dem.labels_)
+#print(kmeans_obj_Dem.inertia_)
 
 
 #%%
@@ -58,7 +58,7 @@ for i in range(1, 11):
 # Plotting the graph
 elbow_data_Dem = pd.DataFrame({"k": range(1, 11), "wcss": wcss})
 fig = px.line(elbow_data_Dem, x="k", y="wcss", title="Elbow Method")
-fig.show()
+fig.show(renderer="browser")
 #%%
 #Retrain the model with 3 clusters
 kmeans_obj_Dem = KMeans(n_clusters=3, random_state=1).fit(clust_data_Dem)
@@ -126,7 +126,7 @@ fig
 
 #%%
 # Decision Tree model using clusters
-kmeans_obj_Dem = KMeans(n_clusters=3, algorithm="auto", random_state=1).fit(clust_data_Dem)
+kmeans_obj_Dem = KMeans(n_clusters=3, algorithm="lloyd", random_state=1).fit(clust_data_Dem)
 house_votes_Dem['clusters'] = kmeans_obj_Dem.labels_
 
 tree_data = house_votes_Dem.drop(columns=["Last.Name"])
@@ -149,7 +149,7 @@ tree_data_nc = tree_data.drop(columns=["clusters"])
 train, tune_and_test = train_test_split(tree_data_nc, test_size=0.3, random_state=1)
 tune, test = train_test_split(tune_and_test, test_size=0.5, random_state=1)
 
-features = train.drop(columns=["party.labels"])
+features = train.drop(columns=["p arty.labels"])
 target = train["party.labels"]
 
 party_dt = DecisionTreeClassifier(random_state=1)
